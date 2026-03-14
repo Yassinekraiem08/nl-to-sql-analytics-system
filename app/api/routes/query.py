@@ -11,9 +11,11 @@ from app.core.schema_validator import SchemaValidator
 from app.core.sql_executor import SQLExecutor
 from app.core.pipeline import SelfCorrectingPipeline, PipelineError
 from app.core.result_formatter import ResultFormatter
-from app.core.stores import example_store
+from app.core.stores import example_store, query_cache
 from app.core.confidence import compute_confidence
 from app.core.conversation import session_store, ConversationTurn
+from app.core.ambiguity import detect_ambiguity
+from app.core.performance_hints import analyze_performance
 from app.models.schemas import (
     QueryRequest, QueryResponse, ChartConfig, PipelineTrace, CorrectionRecord,
     SessionCreateRequest, SessionResponse, SessionHistoryResponse, ConversationTurnResponse,
@@ -81,6 +83,16 @@ def ask(request: QueryRequest) -> QueryResponse:
               or (session.database_url if session else None))
     engine = create_engine(db_url) if db_url else get_engine()
 
+    # --- Semantic cache check (skip LLM if near-identical question seen before) ---
+    cache_db_id = db_url or "default"
+    cached = query_cache.lookup(request.question, db_id=cache_db_id)
+    if cached:
+        return QueryResponse(**{**cached.payload, "cache_hit": True})
+
+    # --- Ambiguity detection (non-blocking — attaches warning to response) ---
+    ambiguity = detect_ambiguity(request.question)
+    ambiguity_warning = ambiguity.warning_text() if ambiguity.is_ambiguous else None
+
     # --- Schema intelligence ---
     schema = SchemaLoader(engine).load()
     analyzer = SchemaAnalyzer(schema, engine)
@@ -144,6 +156,15 @@ def ask(request: QueryRequest) -> QueryResponse:
         ],
     )
 
+    confidence = compute_confidence(
+        schema_issues=schema_issues,
+        attempts=result.attempts,
+        row_count=formatted["row_count"],
+    )
+
+    # --- Performance hints ---
+    perf_hints = analyze_performance(sql, schema)
+
     # --- Persist to session and example store ---
     if session:
         session.add_turn(ConversationTurn(
@@ -156,11 +177,22 @@ def ask(request: QueryRequest) -> QueryResponse:
 
     example_store.add(request.question, sql, db_id="default")
 
-    confidence = compute_confidence(
-        schema_issues=schema_issues,
-        attempts=result.attempts,
-        row_count=formatted["row_count"],
-    )
+    # --- Store result in semantic cache ---
+    result_payload = {
+        "question": formatted["question"],
+        "sql": formatted["sql"],
+        "rows": formatted["rows"],
+        "row_count": formatted["row_count"],
+        "summary": formatted["summary"],
+        "chart": chart.model_dump() if chart else None,
+        "execution_time_ms": formatted["execution_time_ms"],
+        "trace": trace.model_dump(),
+        "confidence": confidence,
+        "cache_hit": False,
+        "performance_hints": [str(h) for h in perf_hints],
+        "ambiguity_warning": ambiguity_warning,
+    }
+    query_cache.store(request.question, result_payload, db_id=cache_db_id)
 
     return QueryResponse(
         question=formatted["question"],
@@ -172,4 +204,7 @@ def ask(request: QueryRequest) -> QueryResponse:
         execution_time_ms=formatted["execution_time_ms"],
         trace=trace,
         confidence=confidence,
+        cache_hit=False,
+        performance_hints=[str(h) for h in perf_hints],
+        ambiguity_warning=ambiguity_warning,
     )

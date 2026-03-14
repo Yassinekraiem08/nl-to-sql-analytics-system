@@ -3,14 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Database, BarChart3, MessageSquare, Table, FileText,
   Send, Loader2, AlertCircle, ChevronDown, Zap, RotateCcw,
-  MessageCircle, PlusCircle, Clock,
+  MessageCircle, PlusCircle, Clock, Download, Lightbulb,
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, ScatterChart, Scatter,
   XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
 import { toast } from "sonner";
-import { streamQuery, QueryResponse, createSession, deleteSession } from "@/services/api";
+import { streamQuery, QueryResponse, createSession, deleteSession, exportData } from "@/services/api";
 import { ConfidenceBadge } from "@/components/SchemaGraph";
 
 const ease: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -119,6 +119,7 @@ export default function QueryTerminal() {
   const [result, setResult] = useState<QueryResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [traceOpen, setTraceOpen] = useState(false);
+  const [hintsOpen, setHintsOpen] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const cancelRef = useRef<(() => void) | null>(null);
@@ -185,6 +186,7 @@ export default function QueryTerminal() {
       onResult: (data) => {
         setResult(data);
         setPhase("done");
+        setHintsOpen(false);
         setHistory((prev) => [...prev, {
           question: query,
           sql: data.sql,
@@ -228,6 +230,14 @@ export default function QueryTerminal() {
           <span className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground/60 ml-2">
             <MessageCircle className="h-3 w-3" />
             {history.length} turn{history.length !== 1 ? "s" : ""}
+          </span>
+        )}
+
+        {/* Cache hit badge */}
+        {result?.cache_hit && (
+          <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/20 ml-2">
+            <Zap className="h-2.5 w-2.5" />
+            cached
           </span>
         )}
 
@@ -429,6 +439,16 @@ export default function QueryTerminal() {
               </pre>
             </div>
 
+            {/* Ambiguity warning */}
+            {result.ambiguity_warning && (
+              <div className="px-5 py-3 border-b border-border bg-yellow-500/5">
+                <div className="flex items-start gap-2 text-yellow-400/80 text-xs">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  <span className="font-mono leading-relaxed">{result.ambiguity_warning}</span>
+                </div>
+              </div>
+            )}
+
             {/* Results table */}
             {result.rows.length > 0 && (
               <div className="p-5 border-b border-border">
@@ -441,6 +461,23 @@ export default function QueryTerminal() {
                       {result.row_count.toLocaleString()} rows · {result.execution_time_ms.toFixed(0)}ms
                     </span>
                     <ConfidenceBadge score={result.confidence} />
+                    {/* Export buttons */}
+                    <button
+                      onClick={() => exportData(result.sql, "csv", result.question.slice(0, 40)).catch((e) => toast.error(e.message))}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded border border-border hover:border-primary/50 hover:text-primary transition-all"
+                      title="Export as CSV"
+                    >
+                      <Download className="h-2.5 w-2.5" />
+                      CSV
+                    </button>
+                    <button
+                      onClick={() => exportData(result.sql, "excel", result.question.slice(0, 40)).catch((e) => toast.error(e.message))}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded border border-border hover:border-primary/50 hover:text-primary transition-all"
+                      title="Export as Excel"
+                    >
+                      <Download className="h-2.5 w-2.5" />
+                      Excel
+                    </button>
                   </span>
                 </div>
                 <div className="overflow-auto max-h-52 rounded-lg border border-border">
@@ -556,6 +593,43 @@ export default function QueryTerminal() {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Performance hints */}
+            {result.performance_hints.length > 0 && (
+              <div className="border-t border-border">
+                <button
+                  onClick={() => setHintsOpen((o) => !o)}
+                  className="w-full flex items-center gap-2 px-5 py-3 text-xs text-muted-foreground hover:text-foreground transition-colors text-left"
+                >
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${hintsOpen ? "rotate-180" : ""}`} />
+                  <Lightbulb className="h-3.5 w-3.5 text-yellow-400/70" />
+                  <span className="font-mono">Performance hints</span>
+                  <span className="ml-2 text-[10px] font-mono px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                    {result.performance_hints.length}
+                  </span>
+                </button>
+                <AnimatePresence>
+                  {hintsOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-5 pb-4 space-y-1.5 bg-muted/10">
+                        {result.performance_hints.map((hint, i) => (
+                          <div key={i} className="flex items-start gap-2 text-xs font-mono text-yellow-400/70">
+                            <span className="shrink-0 mt-0.5">→</span>
+                            <span>{hint}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
 
           </motion.div>
         )}

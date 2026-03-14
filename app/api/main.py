@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import health, schema, query, stream
+from app.api.routes import health, schema, query, stream, export
 
 app = FastAPI(
     title="Natural Language Analytics System",
@@ -26,3 +26,4 @@ app.include_router(health.router)
 app.include_router(schema.router)
 app.include_router(query.router)
 app.include_router(stream.router)
+app.include_router(export.router)

@@ -21,6 +21,9 @@ export interface QueryResponse {
     correction_history: { attempt: number; sql: string; error: string }[];
   };
   confidence: number;
+  cache_hit: boolean;
+  performance_hints: string[];
+  ambiguity_warning: string | null;
 }
 
 export async function runQuery(
@@ -107,6 +110,31 @@ export async function createSession(): Promise<SessionInfo> {
 
 export async function deleteSession(sessionId: string): Promise<void> {
   await fetch(`${API_BASE}/sessions/${sessionId}`, { method: "DELETE" });
+}
+
+// ---------------------------------------------------------------------------
+// Data export
+// ---------------------------------------------------------------------------
+
+export async function exportData(
+  sql: string,
+  format: "csv" | "excel",
+  filename = "query_results",
+  databaseUrl?: string,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/export`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sql, format, filename, database_url: databaseUrl }),
+  });
+  if (!res.ok) throw new Error("Export failed");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${filename}.${format === "csv" ? "csv" : "xlsx"}`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ---------------------------------------------------------------------------

@@ -75,6 +75,9 @@ class QueryResponse(BaseModel):
     execution_time_ms: float
     trace: PipelineTrace
     confidence: float = 1.0
+    cache_hit: bool = False
+    performance_hints: list[str] = []
+    ambiguity_warning: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

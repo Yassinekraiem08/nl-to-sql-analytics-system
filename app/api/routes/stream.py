@@ -32,9 +32,10 @@ from app.core.sql_executor import SQLExecutor, SQLExecutionError
 from app.core.schema_validator import SchemaValidator
 from app.core.result_formatter import ResultFormatter
 from app.core.pipeline import _CORRECTION_TEMPLATE
-from app.core.stores import example_store
+from app.core.stores import example_store, query_cache
 from app.core.confidence import compute_confidence
 from app.core.conversation import session_store, ConversationTurn
+from app.core.performance_hints import analyze_performance
 from app.models.schemas import QueryRequest, ChartConfig, PipelineTrace, CorrectionRecord
 
 logger = logging.getLogger(__name__)
@@ -76,6 +77,16 @@ async def ask_stream(request: QueryRequest):
 
     async def event_stream() -> AsyncIterator[dict]:
         try:
+            # ── 0. Semantic cache check ───────────────────────────────────
+            cache_db_id = request.database_url or "default"
+            cached = await loop.run_in_executor(
+                None, lambda: query_cache.lookup(request.question, db_id=cache_db_id)
+            )
+            if cached:
+                yield _evt("status", "Cache hit — returning cached result…")
+                yield _evt("result", {**cached.payload, "cache_hit": True})
+                return
+
             # ── 1. Schema analysis (sync → thread) ───────────────────────
             yield _evt("status", "Analyzing schema…")
             schema = await loop.run_in_executor(None, lambda: SchemaLoader(engine).load())
@@ -102,7 +113,6 @@ async def ask_stream(request: QueryRequest):
             df = None
 
             for attempt in range(1, MAX_RETRIES + 2):
-                # ── Stream SQL tokens ─────────────────────────────────────
                 yield _evt("generating", None)
                 raw_tokens: list[str] = []
 
@@ -117,18 +127,16 @@ async def ask_stream(request: QueryRequest):
                     yield _evt("error", "Could not extract SQL from model response.")
                     return
 
-                # ── Safety check ──────────────────────────────────────────
                 try:
                     _sql_validator.validate(sql)
                 except SQLValidationError as exc:
                     yield _evt("error", f"Unsafe SQL: {exc}")
                     return
 
-                # ── Execute (sync → thread) ───────────────────────────────
                 yield _evt("status", "Running query…")
                 try:
                     df = await loop.run_in_executor(None, executor.execute, sql)
-                    break  # success
+                    break
 
                 except SQLExecutionError as exc:
                     error_msg = str(exc)
@@ -185,6 +193,11 @@ async def ask_stream(request: QueryRequest):
                 row_count=formatted["row_count"],
             )
 
+            # ── 5. Performance hints ──────────────────────────────────────
+            perf_hints = await loop.run_in_executor(
+                None, lambda: analyze_performance(sql, schema)
+            )
+
             result_payload = {
                 "question": formatted["question"],
                 "sql": formatted["sql"],
@@ -195,6 +208,9 @@ async def ask_stream(request: QueryRequest):
                 "execution_time_ms": formatted["execution_time_ms"],
                 "trace": trace.model_dump(),
                 "confidence": confidence,
+                "cache_hit": False,
+                "performance_hints": [str(h) for h in perf_hints],
+                "ambiguity_warning": None,
             }
 
             # Persist turn to session
@@ -207,9 +223,12 @@ async def ask_stream(request: QueryRequest):
                     summary=formatted["summary"],
                 )))
 
-            # Store for future few-shot retrieval
+            # Store for few-shot retrieval and semantic cache
             await loop.run_in_executor(
                 None, lambda: example_store.add(request.question, sql, db_id="default")
+            )
+            await loop.run_in_executor(
+                None, lambda: query_cache.store(request.question, result_payload, db_id=cache_db_id)
             )
 
             yield _evt("result", result_payload)
