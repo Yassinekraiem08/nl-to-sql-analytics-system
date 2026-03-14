@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+sse-starlette
+sqlalchemy
+psycopg2-binary
+pandas
+plotly
+pydantic
+pydantic-settings
+anthropic
+openai
+python-dotenv
+pytest
+httpx
+sqlparse
+streamlit

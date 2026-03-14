@@ -1,0 +1,72 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 4%;
+    --foreground: 210 20% 92%;
+
+    --card: 220 18% 7%;
+    --card-foreground: 210 20% 92%;
+
+    --popover: 220 18% 7%;
+    --popover-foreground: 210 20% 92%;
+
+    --primary: 174 72% 52%;
+    --primary-foreground: 220 20% 4%;
+
+    --secondary: 220 16% 12%;
+    --secondary-foreground: 210 20% 72%;
+
+    --muted: 220 14% 10%;
+    --muted-foreground: 215 12% 48%;
+
+    --accent: 174 72% 52%;
+    --accent-foreground: 220 20% 4%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 14% 14%;
+    --input: 220 14% 14%;
+    --ring: 174 72% 52%;
+
+    --radius: 0.5rem;
+
+    --font-sans: "Inter Variable", sans-serif;
+    --font-mono: "JetBrains Mono Variable", monospace;
+
+    --glow: 174 72% 52%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+  code, pre, .font-mono { font-family: var(--font-mono); }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(174 90% 70%));
+  }
+  .glow-sm  { box-shadow: 0 0 20px -5px hsl(var(--glow) / 0.15); }
+  .glow-md  { box-shadow: 0 0 40px -10px hsl(var(--glow) / 0.2); }
+  .surface-glass {
+    @apply bg-card/60 backdrop-blur-xl border border-border;
+  }
+  .shadow-layered {
+    box-shadow:
+      0 1px 2px hsl(0 0% 0% / 0.3),
+      0 4px 8px hsl(0 0% 0% / 0.2),
+      0 12px 24px hsl(0 0% 0% / 0.15);
+  }
+}
