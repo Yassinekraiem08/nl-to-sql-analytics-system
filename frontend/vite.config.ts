@@ -10,10 +10,11 @@ export default defineConfig({
   server: {
     port: 8080,
     proxy: {
-      "/ask":    { target: "http://localhost:8000", changeOrigin: true },
-      "/health": { target: "http://localhost:8000", changeOrigin: true },
-      "/schema": { target: "http://localhost:8000", changeOrigin: true },
-      "/schema/graph": { target: "http://localhost:8000", changeOrigin: true },
+      "/ask":      { target: "http://127.0.0.1:8000", changeOrigin: true },
+      "/health":   { target: "http://127.0.0.1:8000", changeOrigin: true },
+      "/schema":   { target: "http://127.0.0.1:8000", changeOrigin: true },
+      "/sessions": { target: "http://127.0.0.1:8000", changeOrigin: true },
+      "/export":   { target: "http://127.0.0.1:8000", changeOrigin: true },
     },
   },
 });

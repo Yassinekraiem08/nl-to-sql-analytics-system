@@ -9,10 +9,26 @@ from typing import AsyncIterator
 from config import settings
 
 
+_DEFAULT_MODELS = {
+    "anthropic": "claude-opus-4-6",
+    "openai":    "gpt-4o-mini",
+}
+
+
 class LLMClient:
     def __init__(self, model: str | None = None, provider: str | None = None) -> None:
-        self._model = model or settings.llm_model
         self._provider = provider or settings.llm_provider
+        if model:
+            self._model = model
+        else:
+            # Use the env-configured model only when it belongs to the active provider.
+            # Prevents sending a Claude model name to the OpenAI API (and vice-versa).
+            configured = settings.llm_model
+            is_claude_model = configured.startswith("claude")
+            if self._provider == "anthropic":
+                self._model = configured if is_claude_model else _DEFAULT_MODELS["anthropic"]
+            else:
+                self._model = configured if not is_claude_model else _DEFAULT_MODELS["openai"]
 
     # ------------------------------------------------------------------
     # Sync — used by the standard pipeline
