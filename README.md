@@ -8,11 +8,13 @@
 ![Tests](https://img.shields.io/badge/tests-212%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
+**[Live Demo →](https://querymind.vercel.app)** · **[API Docs →](https://querymind-production.up.railway.app/docs)**
+
 ---
 
 ## What it does
 
-QueryMind translates natural language questions into SQL queries, executes them against a relational database, and returns structured results — tables, charts, AI-written narratives, and a full pipeline trace — all streamed live to the browser.
+QueryMind translates natural language questions into SQL queries, executes them against a relational database, and returns structured results — tables, charts, plain-English narratives, and a full pipeline trace — all streamed live to the browser.
 
 ```
 "Top 10 customers by total spend"
@@ -136,20 +138,16 @@ cp .env.example .env
 # DATABASE_URL=sqlite:///dev.db
 ```
 
-### 3. Seed the demo database
+### 3. Start the backend
 ```bash
-python scripts/seed_demo.py
-# Creates dev.db with 1000 users, 60 products, 5000 orders, ~16k order items
-```
-
-### 4. Start the backend
-```bash
-DATABASE_URL=sqlite:///dev.db uvicorn app.api.main:app --reload --reload-dir app
+uvicorn app.api.main:app --reload --reload-dir app
 # API running on http://127.0.0.1:8000
 # Docs at http://127.0.0.1:8000/docs
 ```
 
-### 5. Start the frontend
+> `dev.db` is included in the repo — pre-seeded with 1 000 users, 60 products, 5 000 orders, ~16 k order items. Run `python scripts/seed_demo.py` to regenerate it.
+
+### 4. Start the frontend
 ```bash
 cd frontend
 npm install
@@ -157,7 +155,7 @@ npm run dev
 # UI running on http://localhost:8080
 ```
 
-### 6. Run the tests
+### 5. Run the tests
 ```bash
 pytest tests/ -v
 # 212 tests passing
@@ -241,6 +239,19 @@ Interactive docs: `http://127.0.0.1:8000/docs`
 │   └── create_mini_benchmark.py # Mini benchmark generator
 └── tests/                   # 212 tests across 15 modules
 ```
+
+---
+
+## Deployment
+
+| Service | Role |
+|---|---|
+| [Railway](https://railway.app) | FastAPI backend + SQLite |
+| [Vercel](https://vercel.com) | React frontend |
+
+**Backend (Railway)** — connects via `Procfile` and `railway.toml`. Set env vars: `LLM_PROVIDER`, `OPENAI_API_KEY`, `LLM_MODEL`, `DATABASE_URL`, `ALLOWED_ORIGINS`.
+
+**Frontend (Vercel)** — set root directory to `frontend`, framework to Vite, and env var `VITE_API_URL` to the Railway backend URL.
 
 ---
 
