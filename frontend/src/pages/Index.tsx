@@ -127,12 +127,16 @@ export default function LandingPage() {
           initial="hidden" whileInView="visible" viewport={{ once: true }}
           className="mb-8"
         >
-          <motion.div variants={fadeUp} custom={0} className="mb-1">
+          <motion.div variants={fadeUp} custom={0} className="mb-1 flex items-center gap-3">
             <h2 className="text-2xl font-bold text-foreground">Schema intelligence</h2>
+            <span className="flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-full border border-primary/30 bg-primary/5 text-primary">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              live from backend
+            </span>
           </motion.div>
           <motion.p variants={fadeUp} custom={1} className="text-sm text-muted-foreground">
-            The system automatically maps your tables and relationships.
-            Click a node to inspect columns and row counts.
+            Introspected at runtime — tables, foreign keys, and row counts pulled directly from the database.
+            Click a node to inspect columns.
           </motion.p>
         </motion.div>
         <motion.div
