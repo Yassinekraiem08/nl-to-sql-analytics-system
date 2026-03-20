@@ -58,7 +58,7 @@ class ResultFormatter:
 
     @staticmethod
     def _recommend_chart(df: pd.DataFrame) -> dict[str, Any] | None:
-        """Heuristically recommend a Plotly chart type based on column types."""
+        """Heuristically recommend a chart type based on column types."""
         if df.empty or len(df.columns) < 2:
             return None
 
@@ -68,16 +68,24 @@ class ResultFormatter:
         if not numeric_cols:
             return None
 
-        x_col = non_numeric_cols[0] if non_numeric_cols else df.columns[0]
-        y_col = numeric_cols[0]
+        # Prefer non-ID numeric columns for y-axis (id/pk columns are not meaningful metrics)
+        metric_cols = [
+            c for c in numeric_cols
+            if not str(c).lower().replace("_", "").endswith("id")
+        ] or numeric_cols
 
-        # Time-series detection
+        x_col = non_numeric_cols[0] if non_numeric_cols else df.columns[0]
+        y_col = metric_cols[0]
+
+        # Time-series → line
         x_lower = str(x_col).lower()
         if any(kw in x_lower for kw in ("date", "time", "month", "year", "week", "day")):
             chart_type = "line"
-        elif len(df) <= 10 and len(numeric_cols) == 1:
+        # Categorical x-axis → bar
+        elif non_numeric_cols:
             chart_type = "bar"
-        elif len(numeric_cols) >= 2:
+        # Both axes numeric → scatter
+        elif len(metric_cols) >= 2:
             chart_type = "scatter"
         else:
             chart_type = "bar"

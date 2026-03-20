@@ -324,18 +324,18 @@ export default function QueryTerminal() {
         <p className="mt-2 ml-7 text-[11px] text-muted-foreground/40 font-mono">⌘ Enter to run</p>
       </div>
 
-      {/* Sample chips */}
-      {phase === "idle" && !result && !error && (
+      {/* Sample chips — always visible when not running */}
+      {!isRunning && (
         <div className="px-5 py-4 border-b border-border">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-3">
-            Try a sample
+            {result ? "Try another" : "Try a sample query"}
           </p>
           <div className="flex flex-wrap gap-2">
             {SAMPLES.map((s) => (
               <button
                 key={s}
                 onClick={() => submit(s)}
-                className="text-xs text-muted-foreground border border-border rounded-full px-3 py-1 hover:border-primary/50 hover:text-primary transition-all duration-200"
+                className="text-xs text-muted-foreground border border-border rounded-full px-3 py-1.5 hover:border-primary/60 hover:text-primary hover:bg-primary/5 transition-all duration-200"
               >
                 {s}
               </button>

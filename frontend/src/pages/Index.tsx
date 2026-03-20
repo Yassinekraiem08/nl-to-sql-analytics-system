@@ -212,7 +212,7 @@ export default function LandingPage() {
             <Terminal className="h-4 w-4 text-primary" />
             <span className="font-medium text-foreground">QueryMind</span>
           </div>
-          <span>Built with Python, SQL, and good taste.</span>
+          <span>Built with Python, SQL, and good taste. · <a href="https://github.com/Yassinekraiem08/nl-to-sql-analytics-system" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors underline underline-offset-2">GitHub</a></span>
         </div>
       </footer>
 
