@@ -1,6 +1,8 @@
 # Environment
 .env
 *.env
+frontend/.env.local
+!frontend/.env
 
 # Python
 __pycache__/
