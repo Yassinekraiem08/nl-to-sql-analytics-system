@@ -18,16 +18,16 @@ const fadeUp = {
 
 const features = [
   { icon: MessageSquare, title: "Natural Language Input",     desc: "Ask questions in plain English. No SQL knowledge required." },
-  { icon: Database,      title: "Intelligent SQL Generation", desc: "LLM-powered query builder with schema-aware context." },
+  { icon: Database,      title: "Intelligent SQL Generation", desc: "Schema-aware query builder that resolves joins and aliases automatically." },
   { icon: Table,         title: "Structured Tables",          desc: "Results rendered as sortable, filterable data tables." },
   { icon: BarChart3,     title: "Auto-Generated Charts",      desc: "Visualizations chosen based on data shape and query intent." },
-  { icon: FileText,      title: "Narrative Explanations",     desc: "AI-written summaries that explain what the data means." },
+  { icon: FileText,      title: "Narrative Explanations",     desc: "Plain-English summaries that explain what the data means." },
   { icon: Zap,           title: "Real-Time Pipeline",         desc: "Question → SQL → Execute → Visualize in under 2 seconds." },
 ];
 
 const steps = [
   { num: "01", label: "Ask",     detail: "Type any question about your data in plain English." },
-  { num: "02", label: "Parse",   detail: "LLM maps intent to schema, resolves joins, generates validated SQL." },
+  { num: "02", label: "Parse",   detail: "Intent mapped to schema, joins resolved, validated SQL generated." },
   { num: "03", label: "Execute", detail: "Query runs against your database with sandboxed read-only access." },
   { num: "04", label: "Respond", detail: "Table + chart + narrative returned in a single unified response." },
 ];
@@ -82,7 +82,7 @@ export default function LandingPage() {
             variants={fadeUp} custom={2}
             className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl"
           >
-            An LLM-powered analytics system that converts natural language into SQL —
+            A text-to-SQL analytics engine that converts natural language into SQL —
             returning tables, charts, and narrative explanations in a single response.
           </motion.p>
 
@@ -212,7 +212,7 @@ export default function LandingPage() {
             <Terminal className="h-4 w-4 text-primary" />
             <span className="font-medium text-foreground">QueryMind</span>
           </div>
-          <span>Built with LLMs, SQL, and good taste.</span>
+          <span>Built with Python, SQL, and good taste.</span>
         </div>
       </footer>
 
