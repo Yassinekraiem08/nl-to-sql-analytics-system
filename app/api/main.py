@@ -13,9 +13,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://0ce436b5-3f3c-416e-a2b1-f60a793a4fa8.lovable.app",
-        "http://localhost:8080",   # Vite dev server
-        "http://localhost:5173",   # Vite alt port
-        "http://localhost:3000",   # fallback local dev
+        "http://localhost:8080",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        # Production — populated via ALLOWED_ORIGINS env var on Railway
+        *[o.strip() for o in __import__("os").environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()],
     ],
     allow_credentials=True,
     allow_methods=["*"],
