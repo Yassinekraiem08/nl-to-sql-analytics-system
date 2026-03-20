@@ -64,7 +64,7 @@ async def ask_stream(request: QueryRequest):
     generator = SQLGenerator(provider=provider)
     formatter = ResultFormatter(provider=provider)
     executor = SQLExecutor(engine)
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     # Resolve session for multi-turn context
     session = None

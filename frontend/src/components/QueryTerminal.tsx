@@ -175,6 +175,7 @@ export default function QueryTerminal() {
       },
       onGenerating: () => {
         setPhase("generating");
+        setStatusMsg("");
         setStreamedSql("");  // clear for new attempt
       },
       onToken: (token) => {

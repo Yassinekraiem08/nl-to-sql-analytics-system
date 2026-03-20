@@ -175,37 +175,48 @@ export function streamQuery(
       return;
     }
 
-    const reader = res.body!.getReader();
+    if (!res.body) {
+      callbacks.onError("Response body is null — stream not supported");
+      return;
+    }
+
+    const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
+        buffer += decoder.decode(value, { stream: true });
 
-      // SSE blocks are separated by double newlines
-      const blocks = buffer.split("\n\n");
-      buffer = blocks.pop() ?? "";
+        // SSE blocks separated by \n\n or \r\n\r\n (sse-starlette uses \r\n)
+        const blocks = buffer.split(/\r?\n\r?\n/);
+        buffer = blocks.pop() ?? "";
 
-      for (const block of blocks) {
-        const dataLine = block.split("\n").find((l) => l.startsWith("data: "));
-        if (!dataLine) continue;
-        let event: StreamEvent;
-        try {
-          event = JSON.parse(dataLine.slice(6)) as StreamEvent;
-        } catch {
-          continue;
+        for (const block of blocks) {
+          const dataLine = block.split(/\r?\n/).find((l) => l.startsWith("data: "));
+          if (!dataLine) continue;
+          let event: StreamEvent;
+          try {
+            event = JSON.parse(dataLine.slice(6)) as StreamEvent;
+          } catch {
+            continue;
+          }
+          switch (event.type) {
+            case "status":     callbacks.onStatus(event.data);     break;
+            case "generating": callbacks.onGenerating();            break;
+            case "token":      callbacks.onToken(event.data);      break;
+            case "correction": callbacks.onCorrection(event.data); break;
+            case "result":     callbacks.onResult(event.data);     break;
+            case "error":      callbacks.onError(event.data);      break;
+          }
         }
-        switch (event.type) {
-          case "status":     callbacks.onStatus(event.data);     break;
-          case "generating": callbacks.onGenerating();            break;
-          case "token":      callbacks.onToken(event.data);      break;
-          case "correction": callbacks.onCorrection(event.data); break;
-          case "result":     callbacks.onResult(event.data);     break;
-          case "error":      callbacks.onError(event.data);      break;
-        }
+      }
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        callbacks.onError(err instanceof Error ? err.message : "Stream read error");
       }
     }
   })();
