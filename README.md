@@ -8,7 +8,7 @@
 ![Tests](https://img.shields.io/badge/tests-212%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-**[Live Demo →](https://nl-to-sql-analytics-system-qgol.vercel.app)** · **[API Docs →](https://web-production-2d03f.up.railway.app/docs)**
+**[Live Demo →](https://querymind-demo.vercel.app)** · **[API Docs →](https://web-production-2d03f.up.railway.app/docs)**
 
 ---
 
