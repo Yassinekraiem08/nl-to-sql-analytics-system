@@ -80,18 +80,27 @@ export default function LandingPage() {
 
           <motion.p
             variants={fadeUp} custom={2}
-            className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl"
+            className="text-lg text-muted-foreground leading-relaxed mb-6 max-w-lg"
           >
-            A text-to-SQL analytics engine that converts natural language into SQL —
-            returning tables, charts, and narrative explanations in a single response.
+            Type a question. Get SQL, a results table, a chart, and a plain-English summary — live.
           </motion.p>
 
-          <motion.div variants={fadeUp} custom={3} className="flex items-center gap-4">
+          <motion.div variants={fadeUp} custom={3} className="flex items-center gap-3 mb-8 text-xs font-mono text-muted-foreground/60">
+            <span>212 tests</span>
+            <span className="text-border">·</span>
+            <span>SQLite + PostgreSQL</span>
+            <span className="text-border">·</span>
+            <span>Self-correcting pipeline</span>
+            <span className="text-border">·</span>
+            <span>&lt;2s queries</span>
+          </motion.div>
+
+          <motion.div variants={fadeUp} custom={4} className="flex items-center gap-4">
             <a
               href="#demo"
               className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-lg font-medium hover:opacity-90 transition-opacity"
             >
-              See it in action <ArrowRight className="h-4 w-4" />
+              Try it live <ArrowRight className="h-4 w-4" />
             </a>
             <a href="#how" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               How it works →
